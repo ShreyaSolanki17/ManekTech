@@ -18,16 +18,22 @@ def fetch(url: str) -> str:
     return resp.text
 
 
+def normalize_url(href: str) -> str:
+    href = href.strip()
+    if href.startswith("http"):
+        return href
+    if href.startswith("/"):
+        return "https://caad.org.pt" + href
+    return BASE_URL + href
+
+
 def extract_case_links(html: str) -> List[str]:
     soup = BeautifulSoup(html, "lxml")
     links = []
     for a in soup.find_all("a", href=True):
         href = a["href"].strip()
-        if "/tributario/decisoes/" in href and href != BASE_URL:
-            if href.startswith("/"):
-                href = "https://caad.org.pt" + href
-            if href.startswith("http"):
-                links.append(href)
+        if "decisao.php" in href and "id=" in href:
+            links.append(normalize_url(href))
     return links
 
 
@@ -63,11 +69,10 @@ def crawl_listing(max_pages: int) -> List[str]:
         soup = BeautifulSoup(html, "lxml")
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
-            if "decisoes" in href and "page" in href:
-                if href.startswith("/"):
-                    href = "https://caad.org.pt" + href
-                if href.startswith("http") and href not in visited:
-                    to_visit.append(href)
+            if "index.php" in href or href.startswith("?"):
+                next_url = normalize_url(href)
+                if next_url not in visited:
+                    to_visit.append(next_url)
 
     return sorted(case_links)
 

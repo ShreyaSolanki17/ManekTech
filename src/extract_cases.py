@@ -72,6 +72,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", default="data/raw/raw_index.jsonl")
     parser.add_argument("--output", default="data/processed/cases.jsonl")
+    parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
 
     records = []
@@ -79,11 +80,16 @@ def main() -> None:
         for line in f:
             records.append(json.loads(line))
 
+    if args.limit and args.limit > 0:
+        records = records[: args.limit]
+
     extracted = extract_cases(records)
 
     with open(args.output, "w", encoding="utf-8") as f:
         for item in extracted:
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+    print(f"Extracted {len(extracted)} of {len(records)} cases")
 
 
 if __name__ == "__main__":
