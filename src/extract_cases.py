@@ -70,11 +70,19 @@ def main() -> None:
 
     extracted = extract_cases(records)
 
-    with open(args.output, "w", encoding="utf-8") as f:
-        for item in extracted:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
-
-    print(f"Extracted {len(extracted)} of {len(records)} cases")
+    # Write to a temp file first
+    import tempfile, shutil
+    temp_path = None
+    if extracted:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, dir=str(Path(args.output).parent)) as tf:
+            temp_path = tf.name
+            for item in extracted:
+                tf.write(json.dumps(item, ensure_ascii=False) + "\n")
+        # Only replace output if at least one case was extracted
+        shutil.move(temp_path, args.output)
+        print(f"Extracted {len(extracted)} of {len(records)} cases")
+    else:
+        print("No cases extracted. Output file left unchanged.")
 
 
 if __name__ == "__main__":
