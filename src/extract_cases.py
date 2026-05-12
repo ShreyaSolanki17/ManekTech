@@ -1,3 +1,6 @@
+from utils_chunking import chunk_text
+# Add missing import for os
+import os
 import argparse
 import json
 from pathlib import Path
@@ -29,7 +32,28 @@ def call_llm_with_fallback(case_id: str, raw_text: str) -> Dict[str, Any]:
     """
     Try Gemini first, then Groq Llama-3, then Groq Mixtral if needed.
     """
-    safe_raw_text = raw_text[:12000].replace('{', '{{').replace('}', '}}')
+    # If text is too large, chunk and summarize before extraction
+    MAX_TOKENS = 6000  # Conservative for Groq
+    SAFE_CHARS = 12000
+    if len(raw_text) > SAFE_CHARS:
+        print(f"Case {case_id} too large, chunking and summarizing...")
+        chunks = chunk_text(raw_text, max_tokens=MAX_TOKENS - 500, overlap=200)
+        summarized_chunks = []
+        for i, chunk in enumerate(chunks):
+            chunk_prompt = f"Resuma o seguinte texto jurídico em português, mantendo todos os detalhes essenciais para extração de informações legais.\n\nTexto ({i+1}/{len(chunks)}):\n" + chunk
+            # Try Gemini for summarization
+            try:
+                model = get_gemini_model()
+                response = model.generate_content(chunk_prompt)
+                summarized_chunks.append(response.text.strip())
+            except Exception as exc:
+                print(f"Summarization failed for chunk {i+1} of case {case_id}: {exc}")
+                summarized_chunks.append(chunk[:SAFE_CHARS])  # fallback: truncate
+        summarized_text = '\n'.join(summarized_chunks)
+        safe_raw_text = summarized_text.replace('{', '{{').replace('}', '}}')
+    else:
+        safe_raw_text = raw_text[:SAFE_CHARS].replace('{', '{{').replace('}', '}}')
+
     prompt = PROMPT_TEMPLATE.replace("<<CASE_ID>>", case_id).replace("<<RAW_TEXT>>", safe_raw_text)
     # Try Gemini
     try:
@@ -80,29 +104,42 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
 
+    # Load already extracted case_ids
+    existing = {}
+    if os.path.exists(args.output):
+        with open(args.output, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                    existing[obj["case_id"]] = obj
+                except Exception:
+                    continue
+
+    # Load all records
     records = []
     with open(args.input, "r", encoding="utf-8") as f:
         for line in f:
-            records.append(json.loads(line))
+            rec = json.loads(line)
+            if rec["case_id"] not in existing:
+                records.append(rec)
 
     if args.limit and args.limit > 0:
         records = records[: args.limit]
 
+    if not records:
+        print("All cases already extracted. Nothing to do.")
+        return
+
     extracted = extract_cases(records)
 
-    # Write to a temp file first
-    import tempfile, shutil
-    temp_path = None
+    # Append new results to output file
     if extracted:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, dir=str(Path(args.output).parent)) as tf:
-            temp_path = tf.name
+        with open(args.output, "a", encoding="utf-8") as f:
             for item in extracted:
-                tf.write(json.dumps(item, ensure_ascii=False) + "\n")
-        # Only replace output if at least one case was extracted
-        shutil.move(temp_path, args.output)
-        print(f"Extracted {len(extracted)} of {len(records)} cases")
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        print(f"Extracted {len(extracted)} new cases. Total now: {len(existing) + len(extracted)}")
     else:
-        print("No cases extracted. Output file left unchanged.")
+        print("No new cases extracted. Output file left unchanged.")
 
 
 if __name__ == "__main__":
