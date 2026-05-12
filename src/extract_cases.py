@@ -1,5 +1,6 @@
 import argparse
 import json
+from pathlib import Path
 from typing import Any, Dict, List
 
 from gemini_client import get_gemini_model
@@ -9,27 +10,8 @@ from tqdm import tqdm
 from config import GEMINI_MODEL
 from utils_json import safe_json_loads
 
-SYSTEM_PROMPT = """
-You are extracting structured data from Portuguese tax law decisions.
-Return ONLY valid JSON with the exact schema fields.
-""".strip()
-
-USER_TEMPLATE = """
-Extract the following case into JSON with this schema:
-{
-  "case_id": "string",
-  "decision_date": "YYYY-MM-DD",
-  "plaintiff_name": "string",
-  "defendant_name": "string",
-  "court_decision": "Won" | "Lost" | "Settled",
-  "summary": "2-3 sentences"
-}
-
-Case ID: {case_id}
-
-Raw text:
-{raw_text}
-""".strip()
+PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "extract_cases_prompt.txt"
+PROMPT_TEMPLATE = PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
 class CaseSchema(BaseModel):
@@ -39,12 +21,13 @@ class CaseSchema(BaseModel):
     defendant_name: str
     court_decision: str
     summary: str
+    language: str = Field(pattern=r"^Portuguese$")
 
 
 def call_llm(model, case_id: str, raw_text: str) -> Dict[str, Any]:
-    # Avoid .format() on raw_text with curly braces by using f-string and replacing braces
+    # Escape braces in raw_text to keep prompt formatting safe
     safe_raw_text = raw_text[:12000].replace('{', '{{').replace('}', '}}')
-    prompt = f"{SYSTEM_PROMPT}\nExtract the following case into JSON with this schema:\n{{\n  \"case_id\": \"string\",\n  \"decision_date\": \"YYYY-MM-DD\",\n  \"plaintiff_name\": \"string\",\n  \"defendant_name\": \"string\",\n  \"court_decision\": \"Won\" | \"Lost\" | \"Settled\",\n  \"summary\": \"2-3 sentences\"\n}}\n\nCase ID: {case_id}\n\nRaw text:\n{safe_raw_text}"
+    prompt = PROMPT_TEMPLATE.replace("<<CASE_ID>>", case_id).replace("<<RAW_TEXT>>", safe_raw_text)
     response = model.generate_content(prompt)
     return safe_json_loads(response.text)
 

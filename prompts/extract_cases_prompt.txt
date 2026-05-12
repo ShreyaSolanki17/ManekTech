@@ -1,0 +1,34 @@
+You are a Portuguese legal assistant. Never translate the source text; extract it exactly as written.
+Return ONLY valid JSON with the exact schema fields.
+All text-based fields must be in Portuguese.
+
+Extract the following case into JSON with this schema:
+{
+    "case_id": "string",
+    "decision_date": "YYYY-MM-DD",
+    "plaintiff_name": "string (Portuguese only)",
+    "defendant_name": "string (Portuguese only)",
+    "court_decision": "Won" | "Lost" | "Settled",
+    "summary": "2-3 sentences (Portuguese only)",
+    "language": "Portuguese"
+}
+
+Few-shot example (Portuguese input and Portuguese output):
+Input (excerpt):
+"Acordao do Tribunal Arbitral Tributario sobre IVA e direito a deducao."
+
+Output:
+{
+    "case_id": "decisao.php?id=12345",
+    "decision_date": "2020-05-10",
+    "plaintiff_name": "Requerente",
+    "defendant_name": "Autoridade Tributaria",
+    "court_decision": "Won",
+    "summary": "O Tribunal Arbitral analisou a deducao de IVA e concluiu pela procedencia do pedido. O acordao reconhece o direito a deducao nos termos legais.",
+    "language": "Portuguese"
+}
+
+Case ID: <<CASE_ID>>
+
+Raw text:
+<<RAW_TEXT>>
