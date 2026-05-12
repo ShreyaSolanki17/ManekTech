@@ -42,7 +42,9 @@ class CaseSchema(BaseModel):
 
 
 def call_llm(model, case_id: str, raw_text: str) -> Dict[str, Any]:
-    prompt = SYSTEM_PROMPT + "\n" + USER_TEMPLATE.format(case_id=case_id, raw_text=raw_text[:12000])
+    # Avoid .format() on raw_text with curly braces by using f-string and replacing braces
+    safe_raw_text = raw_text[:12000].replace('{', '{{').replace('}', '}}')
+    prompt = f"{SYSTEM_PROMPT}\nExtract the following case into JSON with this schema:\n{{\n  \"case_id\": \"string\",\n  \"decision_date\": \"YYYY-MM-DD\",\n  \"plaintiff_name\": \"string\",\n  \"defendant_name\": \"string\",\n  \"court_decision\": \"Won\" | \"Lost\" | \"Settled\",\n  \"summary\": \"2-3 sentences\"\n}}\n\nCase ID: {case_id}\n\nRaw text:\n{safe_raw_text}"
     response = model.generate_content(prompt)
     return safe_json_loads(response.text)
 
