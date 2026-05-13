@@ -7,6 +7,8 @@ import google.generativeai as genai
 from tqdm import tqdm
 
 from config import CHROMA_DIR, GEMINI_API_KEY, GEMINI_EMBED_MODEL
+from gemini_client import get_gemini_model
+from groq_client import call_groq_llm, GROQ_MODEL, GROQ_MODEL_FALLBACK
 
 
 def load_cases(path: str) -> List[dict]:
@@ -20,16 +22,53 @@ def load_cases(path: str) -> List[dict]:
 def build_documents(cases: List[dict]) -> List[str]:
     docs = []
     for c in cases:
+        summary = translate_summary_to_english(c["summary"])
         doc = (
             f"Case {c['case_id']}\n"
             f"Decision date: {c['decision_date']}\n"
             f"Plaintiff: {c['plaintiff_name']}\n"
             f"Defendant: {c['defendant_name']}\n"
             f"Decision: {c['court_decision']}\n"
-            f"Summary: {c['summary']}"
+            f"Summary: {summary}"
         )
         docs.append(doc)
     return docs
+
+
+def translate_summary_to_english(summary: str) -> str:
+    if not summary.strip():
+        return summary
+
+    prompt = (
+        "Rewrite the following legal case summary in concise, natural English. "
+        "Preserve the meaning and facts. Do not add new information. Return only the rewritten summary.\n\n"
+        f"Summary: {summary}"
+    )
+
+    try:
+        model = get_gemini_model()
+        response = model.generate_content(prompt)
+        translated = (response.text or "").strip()
+        if translated:
+            return translated
+    except Exception:
+        pass
+
+    try:
+        translated = call_groq_llm(prompt, model=GROQ_MODEL).strip()
+        if translated:
+            return translated
+    except Exception:
+        pass
+
+    try:
+        translated = call_groq_llm(prompt, model=GROQ_MODEL_FALLBACK).strip()
+        if translated:
+            return translated
+    except Exception:
+        pass
+
+    return summary
 
 
 def embed_texts(texts: List[str]) -> List[List[float]]:

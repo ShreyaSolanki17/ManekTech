@@ -40,7 +40,7 @@ def retrieve_context(query: str, top_k: int = 3) -> Tuple[List[str], List[str]]:
     return ids, docs
 
 
-def answer_question(query: str, top_k: int = 3) -> Tuple[str, List[str]]:
+def answer_question(query: str, top_k: int = 3) -> Tuple[str, List[str], List[str]]:
     from groq_client import call_groq_llm, GROQ_MODEL, GROQ_MODEL_FALLBACK
     model = get_gemini_model()
     ids, docs = retrieve_context(query, top_k=top_k)
@@ -50,17 +50,17 @@ def answer_question(query: str, top_k: int = 3) -> Tuple[str, List[str]]:
     # Try Gemini first
     try:
         response = model.generate_content(prompt)
-        return response.text, ids
+        return response.text, ids, docs
     except Exception as gemini_exc:
         print(f"Gemini failed: {gemini_exc}\nTrying Groq Llama-3...")
         try:
             groq_response = call_groq_llm(prompt, model=GROQ_MODEL)
-            return groq_response, ids
+            return groq_response, ids, docs
         except Exception as groq_exc:
             print(f"Groq Llama-3 failed: {groq_exc}\nTrying Groq Mixtral...")
             try:
                 groq_response2 = call_groq_llm(prompt, model=GROQ_MODEL_FALLBACK)
-                return groq_response2, ids
+                return groq_response2, ids, docs
             except Exception as groq2_exc:
                 print(f"Groq Mixtral failed: {groq2_exc}")
                 raise RuntimeError("All LLMs failed for answer generation.")

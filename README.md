@@ -1,19 +1,29 @@
 # Legal Document Intelligence (CAAD Tax Decisions)
 
-This project scrapes Portuguese tax law decisions from CAAD, extracts structured JSON with an LLM, builds a simple vector database, and serves a RAG Q&A UI.
+This project scrapes Portuguese tax law decisions from CAAD, extracts structured JSON with help of an LLM, builds a simple vector database (chromadb), and supports a RAG Q&A UI.
 
-## Setup
+## Quickstart from scratch
 
-1) Create and activate a virtual environment
+1) Clone repository and enter project folder
+- `git clone <your-repo-url>`
+- `cd ManekTech`
+
+2) Create and activate a virtual environment
 - Windows PowerShell:
 	- `python -m venv .venv`
 	- `./.venv/Scripts/Activate.ps1`
 
-2) Install dependencies
+3) Install dependencies from `requirements.txt`
 - `pip install -r requirements.txt`
 
-3) Configure environment
-- Copy `.env.example` to `.env` and set `GEMINI_API_KEY` (used for embeddings)
+4) Configure environment
+- Copy `.env.example` to `.env` and set required keys:
+	- `GEMINI_API_KEY` (embeddings / generation)
+	- `GROQ_API_KEY` (fallback extraction / generation)
+
+## Setup
+
+Use the Quickstart section above.
 
 ## Run the pipeline
 
@@ -32,7 +42,24 @@ For demonstration and testing, we have chosen to process 50 cases (`--limit 50`)
 4) Start the UI
 - `streamlit run src/ui_app.py`
 
+## Demo Screenshots
+
+### Question & Answer
+![Q&A Screen](assets/ui-question-answer.png)
+
+### Retrieved Cases with Citations
+![Retrieved Cases](assets/ui-retrieved-cases.png)
+
+The UI demonstrates:
+- End-to-end RAG pipeline: question → retrieval → answer generation.
+- **Clickable case ID links** that open original CAAD decisions, proving data integrity from source to final output.
+- Multi-model fallback strategy for robust answer generation.
+
 ## Notes
+
+### Data Integrity & Source Attribution
+
+Retrieved case IDs are direct clickable links to the original [CAAD website](https://caad.org.pt/tributario/decisoes/), ensuring full traceability from raw data source through extraction, embedding, retrieval, and final answer. This demonstrates that the ETL pipeline (Part 1) maintained referential integrity end-to-end.
 
 ### LLM Fallback for RAG Question Answering
 
@@ -59,3 +86,9 @@ This ensures robust and reliable answers even if one provider is unavailable or 
 - `data/raw` - scraped raw text
 - `data/processed` - extracted JSON
 - `data/chroma` - vector DB
+
+## Requirement checklist
+
+- Reproducibility: `README.md` includes end-to-end setup and run commands from scratch.
+- Reproducibility: `requirements.txt` is present and used for dependency installation.
+- Modularity: extraction, vector DB build, retrieval, and chat UI are separated into dedicated scripts.
