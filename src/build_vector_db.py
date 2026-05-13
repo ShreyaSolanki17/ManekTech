@@ -72,7 +72,6 @@ def translate_summary_to_english(summary: str) -> str:
 
 
 def embed_texts(texts: List[str]) -> List[List[float]]:
-    # Gemini embedding API
     result = genai.embed_content(
         model=GEMINI_EMBED_MODEL,
         content=texts,

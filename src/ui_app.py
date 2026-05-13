@@ -50,7 +50,6 @@ if st.button("Ask") and question.strip():
     st.subheader("Answer")
     st.write(answer)
 
-    # If the model explicitly says it does not know, don't show retrieved IDs
     answer_text = answer if isinstance(answer, str) else str(answer)
     if is_refusal_answer(answer_text):
         st.info("No relevant cases found in the indexed corpus.")

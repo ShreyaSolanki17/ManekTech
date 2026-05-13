@@ -15,8 +15,6 @@ Cite case IDs in your answer.
 
 
 def embed_query(model, query: str) -> List[float]:
-    # Gemini's embedding API
-    # Use Gemini embedding API directly; GenerativeModel does not expose embed_content.
     result = genai.embed_content(
         model=GEMINI_EMBED_MODEL,
         content=query,
@@ -47,7 +45,6 @@ def answer_question(query: str, top_k: int = 3) -> Tuple[str, List[str], List[st
     context = "\n\n".join(docs)
 
     prompt = SYSTEM_PROMPT + f"\nQuestion: {query}\n\nContext:\n{context}"
-    # Try Gemini first
     try:
         response = model.generate_content(prompt)
         return response.text, ids, docs
