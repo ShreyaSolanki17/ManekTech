@@ -44,11 +44,11 @@ For demonstration and testing, we have chosen to process 50 cases (`--limit 50`)
 
 ## Demo Screenshots
 
-### Question & Answer
-![Q&A Screen](assets/ui-question-answer.png)
+### UI Screenshots
+![Q&A Screen](assets/UI_screenshot_1.png)
 
 ### Retrieved Cases with Citations
-![Retrieved Cases](assets/ui-retrieved-cases.png)
+![Retrieved Cases](assets/UI_screenshot_2.png)
 
 The UI demonstrates:
 - End-to-end RAG pipeline: question → retrieval → answer generation.
@@ -92,3 +92,35 @@ This ensures robust and reliable answers even if one provider is unavailable or 
 - Reproducibility: `README.md` includes end-to-end setup and run commands from scratch.
 - Reproducibility: `requirements.txt` is present and used for dependency installation.
 - Modularity: extraction, vector DB build, retrieval, and chat UI are separated into dedicated scripts.
+
+## Available models & how to change them
+
+You can list the provider model options shipped with this repo and change which model is used for generation or embeddings:
+
+- List Gemini models (run locally):
+
+```powershell
+python src/list_gemini_models.py
+```
+
+- List Groq models (run locally):
+
+```powershell
+python src/list_groq_models.py
+```
+
+To change which model the pipeline uses, set the environment variables in your local `.env` (or export them in your shell) before running the app or indexing step. Common variables:
+
+- `GEMINI_MODEL` — generation model used by Gemini
+- `GEMINI_EMBED_MODEL` — embedding model used by Gemini
+- `GROQ_MODEL` — primary Groq generation model
+- `GROQ_MODEL_FALLBACK` — Groq fallback model
+
+Example in PowerShell:
+
+```powershell
+set-item -path env:GEMINI_MODEL -value "gemini-1.5-flash"
+set-item -path env:GEMINI_EMBED_MODEL -value "models/embedding-001"
+```
+
+After changing models, restart the Streamlit UI or re-run the indexing step to ensure the new model choice is used.
