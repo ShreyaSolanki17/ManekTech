@@ -33,6 +33,16 @@ For demonstration and testing, we have chosen to process 50 cases (`--limit 50`)
 - `streamlit run src/ui_app.py`
 
 ## Notes
+
+### LLM Fallback for RAG Question Answering
+
+The RAG question answering system uses a multi-model fallback strategy for answer generation:
+
+1. **Gemini (Google AI Studio)** – Primary model for answer generation.
+2. **Groq Llama-3** – If Gemini fails, the system automatically tries Groq Llama-3 (70B or 8B, as configured).
+3. **Groq Mixtral** – If both above fail, Groq Mixtral is used as a final fallback.
+
+This ensures robust and reliable answers even if one provider is unavailable or rate-limited. You can configure model priorities and API keys in the `.env` file.
 - No API keys are committed. Use `.env` locally only.
 - You can change models via environment variables:
 	- `GEMINI_MODEL` (default: `gemini-1.5-flash-latest`)

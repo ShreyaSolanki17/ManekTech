@@ -22,7 +22,7 @@ class CaseSchema(BaseModel):
     defendant_name: str
     court_decision: str
     summary: str
-    language: str = Field(pattern=r"^Portuguese$")
+    language: str = Field(pattern=r"^English$")
 
 
 def call_llm_with_fallback(case_id: str, raw_text: str) -> Dict[str, Any]:
