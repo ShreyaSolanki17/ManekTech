@@ -23,6 +23,18 @@ def case_label(case_id: str) -> str:
         return f"CAAD case {case_id.split('id=')[-1]}"
     return case_id
 
+
+def is_refusal_answer(answer_text: str) -> bool:
+    lowered = answer_text.lower()
+    refusal_markers = [
+        "do not know",
+        "i don't know",
+        "cannot answer",
+        "can't answer",
+        "insufficient information",
+    ]
+    return any(marker in lowered for marker in refusal_markers)
+
 st.set_page_config(page_title="CAAD Legal RAG", page_icon=":scales:")
 
 st.title("CAAD Legal RAG")
@@ -38,12 +50,17 @@ if st.button("Ask") and question.strip():
     st.subheader("Answer")
     st.write(answer)
 
-    st.subheader("Retrieved case IDs")
-    if case_ids:
-        for index, case_id in enumerate(case_ids):
-            summary_text = extract_summary(docs[index]) if index < len(docs) else ""
-            st.markdown(f"- [{case_label(case_id)}]({build_caad_url(case_id)})")
-            if summary_text:
-                st.caption(summary_text)
+    # If the model explicitly says it does not know, don't show retrieved IDs
+    answer_text = answer if isinstance(answer, str) else str(answer)
+    if is_refusal_answer(answer_text):
+        st.info("No relevant cases found in the indexed corpus.")
     else:
-        st.write("None")
+        st.subheader("Retrieved case IDs")
+        if case_ids:
+            for index, case_id in enumerate(case_ids):
+                summary_text = extract_summary(docs[index]) if index < len(docs) else ""
+                st.markdown(f"- [{case_label(case_id)}]({build_caad_url(case_id)})")
+                if summary_text:
+                    st.caption(summary_text)
+        else:
+            st.write("None")

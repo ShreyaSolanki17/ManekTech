@@ -54,12 +54,17 @@ The UI demonstrates:
 - End-to-end RAG pipeline: question → retrieval → answer generation.
 - **Clickable case ID links** that open original CAAD decisions, proving data integrity from source to final output.
 - Multi-model fallback strategy for robust answer generation.
+- Clear refusal behavior: when the assistant responds with an uncertainty/refusal answer (for example, "I do not know"), the UI hides retrieved case IDs to avoid presenting low-confidence citations as evidence.
 
 ## Notes
 
 ### Data Integrity & Source Attribution
 
 Retrieved case IDs are direct clickable links to the original [CAAD website](https://caad.org.pt/tributario/decisoes/), ensuring full traceability from raw data source through extraction, embedding, retrieval, and final answer. This demonstrates that the ETL pipeline (Part 1) maintained referential integrity end-to-end.
+
+### Refusal Handling in the UI
+
+If the answer generator returns a refusal/uncertainty response (for example, "I do not know" or similar variants), the app shows the answer but does not display the retrieved-case list. This is intentional: it prevents users from interpreting unrelated retrieval results as validated legal support.
 
 ### LLM Fallback for RAG Question Answering
 
