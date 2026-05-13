@@ -13,7 +13,7 @@ This project scrapes Portuguese tax law decisions from CAAD, extracts structured
 - `pip install -r requirements.txt`
 
 3) Configure environment
-- Copy `.env.example` to `.env` and set `GEMINI_API_KEY`
+- Copy `.env.example` to `.env` and set `GEMINI_API_KEY` (used for embeddings)
 
 ## Run the pipeline
 
@@ -36,12 +36,13 @@ For demonstration and testing, we have chosen to process 50 cases (`--limit 50`)
 - No API keys are committed. Use `.env` locally only.
 - You can change models via environment variables:
 	- `GEMINI_MODEL` (default: `gemini-1.5-flash-latest`)
+	- `GEMINI_EMBED_MODEL` (default: `models/embedding-001`)
 
 ## Project structure
 
 - `src/scrape_caad.py` - scrape listing pages and case text
-- `src/extract_cases.py` - LLM extraction into strict JSON (Gemini)
-- `src/build_vector_db.py` - embed and store in Chroma (Gemini)
+- `src/extract_cases.py` - LLM extraction into strict JSON (Groq)
+- `src/build_vector_db.py` - embed and store in Chroma (Gemini embeddings)
 - `src/rag_qa.py` - retrieval and answer generation (Gemini)
 - `src/ui_app.py` - Streamlit UI
 - `src/gemini_client.py` - Gemini API client

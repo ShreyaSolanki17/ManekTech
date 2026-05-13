@@ -1,5 +1,9 @@
 import os
+
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3-70b-8192").strip()  # Default to Llama-3-70B

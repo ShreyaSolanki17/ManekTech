@@ -3,10 +3,10 @@ import json
 from typing import List
 
 import chromadb
-from gemini_client import get_gemini_model
+import google.generativeai as genai
 from tqdm import tqdm
 
-from config import CHROMA_DIR
+from config import CHROMA_DIR, GEMINI_API_KEY, GEMINI_EMBED_MODEL
 
 
 def load_cases(path: str) -> List[dict]:
@@ -32,9 +32,14 @@ def build_documents(cases: List[dict]) -> List[str]:
     return docs
 
 
-def embed_texts(model, texts: List[str]) -> List[List[float]]:
-    # Gemini's embedding API: batch call
-    embeddings = model.embed_content(texts)
+def embed_texts(texts: List[str]) -> List[List[float]]:
+    # Gemini embedding API
+    result = genai.embed_content(
+        model=GEMINI_EMBED_MODEL,
+        content=texts,
+        task_type="retrieval_document",
+    )
+    embeddings = result["embedding"] if isinstance(result, dict) else result
     return embeddings
 
 
@@ -48,7 +53,7 @@ def main() -> None:
     cases = load_cases(args.input)
     docs = build_documents(cases)
 
-    model = get_gemini_model()
+    genai.configure(api_key=GEMINI_API_KEY)
     chroma = chromadb.PersistentClient(path=args.persist)
     collection = chroma.get_or_create_collection(args.collection)
 
@@ -56,7 +61,7 @@ def main() -> None:
     for i in tqdm(range(0, len(docs), batch_size), desc="Embedding"):
         batch_cases = cases[i : i + batch_size]
         batch_docs = docs[i : i + batch_size]
-        embeddings = embed_texts(model, batch_docs)
+        embeddings = embed_texts(batch_docs)
 
         collection.add(
             ids=[c["case_id"] for c in batch_cases],

@@ -1,0 +1,4 @@
+Summarize the following legal text. The summary must be written in Portuguese. Do not translate any part of the text or summary into English. Preserve all essential legal details for information extraction.
+
+Text chunk ({chunk_number}/{total_chunks}):
+<<CHUNK>>
